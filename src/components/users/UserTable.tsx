@@ -11,9 +11,9 @@ import {
   getInitials, 
   formatDate, 
   formatRelativeTime,
-  getLeadStatusColor,
-  DisplayUser 
+  getLeadStatusColor
 } from '@/lib/dataTransformers'
+import { DisplayUser } from '@/lib/supabase'
 import {
   MagnifyingGlassIcon,
   ArrowDownTrayIcon,
@@ -49,7 +49,7 @@ export function UserTable() {
   const [cities, setCities] = useState<string[]>([])
   
   // Debounce search
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   useEffect(() => {
     if (searchTimeoutRef.current) {

@@ -58,7 +58,7 @@ export function ChatTable() {
   const [selectedConversation, setSelectedConversation] = useState<CardConversationSummary | null>(null)
   
   // Debounce search
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   useEffect(() => {
     if (searchTimeoutRef.current) {

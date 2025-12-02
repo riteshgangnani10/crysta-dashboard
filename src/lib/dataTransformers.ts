@@ -237,7 +237,7 @@ export function calculateUserEngagement(chats: ChatHistory[]): {
 }
 
 // Calculate lead conversion metrics
-export function calculateLeadMetrics(users: User[]): {
+export function calculateLeadMetrics(users: Partial<User>[]): {
   totalLeads: number
   conversionRate: number
   appointmentRate: number
