@@ -3,15 +3,19 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { LoginForm } from '@/components/auth/LoginForm'
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
 
-export default function HomePage() {
+export default function DashboardLayoutPage({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const { isAuthenticated, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && isAuthenticated) {
-      router.push('/dashboard')
+    if (!loading && !isAuthenticated) {
+      router.push('/')
     }
   }, [isAuthenticated, loading, router])
 
@@ -23,9 +27,9 @@ export default function HomePage() {
     )
   }
 
-  if (isAuthenticated) {
-    return null // Will redirect to dashboard
+  if (!isAuthenticated) {
+    return null // Will redirect to login
   }
 
-  return <LoginForm />
+  return <DashboardLayout>{children}</DashboardLayout>
 }
