@@ -50,8 +50,8 @@ export function ConversationCard({ conversation, onClick, isSelected }: Conversa
       className={`
         group relative p-4 rounded-xl cursor-pointer transition-all duration-200
         ${isSelected 
-          ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-md' 
-          : 'bg-white hover:bg-gray-50 border border-gray-100 hover:border-gray-200 hover:shadow-lg'
+          ? 'bg-blue-50 border-2 border-blue-300 shadow-md'
+          : 'bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 hover:shadow-md'
         }
       `}
     >
@@ -71,7 +71,7 @@ export function ConversationCard({ conversation, onClick, isSelected }: Conversa
             <h3 className="font-semibold text-gray-900 truncate">
               {displayName}
             </h3>
-            <span className="text-xs text-gray-400 flex items-center gap-1">
+            <span className="text-xs text-gray-500 flex items-center gap-1">
               <PhoneIcon className="w-3 h-3" />
               {formatPhoneNumber(conversation.phone)}
             </span>
@@ -80,13 +80,13 @@ export function ConversationCard({ conversation, onClick, isSelected }: Conversa
           {/* Location and Age Badges */}
           <div className="flex items-center gap-2 mb-2">
             {conversation.city && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                 <MapPinIcon className="w-3 h-3" />
                 {conversation.city}
               </span>
             )}
             {conversation.age && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                 {conversation.age} yrs
               </span>
             )}
@@ -98,7 +98,7 @@ export function ConversationCard({ conversation, onClick, isSelected }: Conversa
           </div>
 
           {/* Last Message Preview */}
-          <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+          <p className="text-sm text-gray-700 line-clamp-2 mb-2">
             <span className={`
               inline-block w-2 h-2 rounded-full mr-2
               ${conversation.lastMessageType === 'human' ? 'bg-blue-500' : 'bg-emerald-500'}
@@ -107,13 +107,13 @@ export function ConversationCard({ conversation, onClick, isSelected }: Conversa
           </p>
 
           {/* Stats Row */}
-          <div className="flex items-center gap-4 text-xs text-gray-400">
+          <div className="flex items-center gap-4 text-xs text-gray-500">
             <span className="flex items-center gap-1">
               <ChatBubbleLeftRightIcon className="w-3.5 h-3.5" />
               {conversation.messageCount} messages
             </span>
-            <span className="text-blue-500">{conversation.userMessageCount} user</span>
-            <span className="text-emerald-500">{conversation.aiMessageCount} AI</span>
+            <span className="text-blue-600">{conversation.userMessageCount} user</span>
+            <span className="text-green-600">{conversation.aiMessageCount} AI</span>
             <span className="flex items-center gap-1 ml-auto">
               <ClockIcon className="w-3.5 h-3.5" />
               {formatRelativeTime(conversation.lastActivity)}
@@ -123,7 +123,7 @@ export function ConversationCard({ conversation, onClick, isSelected }: Conversa
 
         {/* Arrow */}
         <div className="flex-shrink-0 self-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+          <ChevronRightIcon className="w-5 h-5 text-gray-500" />
         </div>
       </div>
     </div>

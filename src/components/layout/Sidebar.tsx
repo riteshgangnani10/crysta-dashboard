@@ -53,7 +53,7 @@ export function Sidebar() {
 
       {/* Desktop sidebar */}
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
-        <div className="flex-1 flex flex-col min-h-0 bg-white/80 backdrop-blur-xl border-r border-gray-200/50 shadow-xl">
+        <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200 shadow-sm">
           <SidebarContent pathname={pathname} signOut={signOut} user={user} />
         </div>
       </div>
@@ -87,7 +87,7 @@ function SidebarContent({ pathname, signOut, user }: {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">Crysta IVF</h1>
-              <p className="text-xs text-gray-500">Analytics Dashboard</p>
+              <p className="text-xs text-gray-600">Analytics Dashboard</p>
             </div>
           </div>
         </div>
@@ -102,13 +102,13 @@ function SidebarContent({ pathname, signOut, user }: {
                   'group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ease-in-out',
                   isActive
                     ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-gray-100/70 hover:text-gray-900'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                 )}
               >
                 <item.icon
                   className={cn(
                     'mr-3 flex-shrink-0 h-5 w-5',
-                    isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-700'
+                    isActive ? 'text-white' : 'text-gray-600 group-hover:text-gray-800'
                   )}
                 />
                 {item.name}
@@ -118,7 +118,7 @@ function SidebarContent({ pathname, signOut, user }: {
         </nav>
       </div>
       
-      <div className="flex-shrink-0 border-t border-gray-200/50 p-4">
+      <div className="flex-shrink-0 border-t border-gray-200 p-4">
         <div className="flex items-center bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-3">
           <div className="flex-shrink-0">
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
@@ -133,7 +133,7 @@ function SidebarContent({ pathname, signOut, user }: {
           </div>
           <button
             onClick={signOut}
-            className="flex-shrink-0 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
+            className="flex-shrink-0 p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
             title="Sign out"
           >
             <ArrowRightOnRectangleIcon className="h-5 w-5" />

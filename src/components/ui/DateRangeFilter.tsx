@@ -71,8 +71,8 @@ export function DateRangeFilter({
             className={cn(
               'px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors',
               activePreset === p.key
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
             )}
           >
             {p.label}
@@ -83,25 +83,25 @@ export function DateRangeFilter({
       {activePreset === 'custom' && (
         <div className="flex items-center gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">From</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">From</label>
             <input
               type="date"
               value={dateRange.from || ''}
               onChange={(e) =>
                 onDateRangeChange({ ...dateRange, from: e.target.value || null })
               }
-              className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+              className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">To</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">To</label>
             <input
               type="date"
               value={dateRange.to || ''}
               onChange={(e) =>
                 onDateRangeChange({ ...dateRange, to: e.target.value || null })
               }
-              className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+              className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 outline-none"
             />
           </div>
         </div>

@@ -62,7 +62,7 @@ export function StatsCard({
           </div>
           <div className="ml-5 w-0 flex-1">
             <dl>
-              <dt className="text-sm font-medium text-gray-500 truncate mb-1">{title}</dt>
+              <dt className="text-sm font-medium text-gray-600 truncate mb-1">{title}</dt>
               <dd className="flex items-baseline">
                 <div className="text-3xl font-bold text-gray-900">
                   {typeof value === 'number' ? formatNumber(value) : value}
@@ -70,9 +70,9 @@ export function StatsCard({
                 {change !== undefined && (
                   <div className={cn(
                     'ml-3 flex items-center text-sm font-semibold px-2 py-1 rounded-full',
-                    change >= 0 
-                      ? 'text-green-700 bg-green-100' 
-                      : 'text-red-700 bg-red-100'
+                    change >= 0
+                      ? 'text-green-800 bg-green-100'
+                      : 'text-red-800 bg-red-100'
                   )}>
                     <span className="mr-1">
                       {change >= 0 ? '↗' : '↘'}
@@ -82,7 +82,7 @@ export function StatsCard({
                 )}
               </dd>
               {changeLabel && (
-                <dd className="text-xs text-gray-500 mt-1">
+                <dd className="text-xs text-gray-600 mt-1">
                   {changeLabel}
                 </dd>
               )}

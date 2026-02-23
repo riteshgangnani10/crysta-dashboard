@@ -93,10 +93,10 @@ export function DashboardOverview() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-gray-900">
             IVF Analytics Dashboard
           </h1>
-          <p className="mt-2 text-lg text-gray-600">
+          <p className="mt-1 text-sm text-gray-600">
             Real-time insights from your Crysta IVF chatbot and lead management
           </p>
         </div>
@@ -104,7 +104,7 @@ export function DashboardOverview() {
           onClick={syncDashboard}
           variant="outline"
           disabled={syncing}
-          className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0 hover:from-blue-600 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200"
+          className="px-4 py-2 bg-blue-600 text-white border-0 hover:bg-blue-700 shadow-sm transition-all duration-200"
         >
           <ArrowPathIcon className={`h-5 w-5 mr-2 ${syncing ? 'animate-spin' : ''}`} />
           {syncing ? 'Syncing...' : 'Refresh Data'}

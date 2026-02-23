@@ -254,10 +254,10 @@ export function ChatTable() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-gray-900">
             Conversations
           </h1>
-          <p className="mt-1 text-gray-600">
+          <p className="mt-1 text-sm text-gray-600">
             View and analyze all chat conversations from your IVF chatbot
           </p>
         </div>
@@ -284,7 +284,7 @@ export function ChatTable() {
 
       {/* Stats Bar - Shows GLOBAL stats from entire database */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 shadow-sm">
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
               <ChatBubbleLeftRightIcon className="w-5 h-5 text-white" />
@@ -293,11 +293,11 @@ export function ChatTable() {
               <div className="text-2xl font-bold text-gray-900">
                 {stats?.totalConversations.toLocaleString() || '—'}
               </div>
-              <div className="text-xs text-gray-500">Total Conversations</div>
+              <div className="text-xs text-gray-600">Total Conversations</div>
             </div>
           </div>
         </div>
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 shadow-sm">
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
               <ChatBubbleLeftRightIcon className="w-5 h-5 text-white" />
@@ -306,11 +306,11 @@ export function ChatTable() {
               <div className="text-2xl font-bold text-gray-900">
                 {stats?.totalMessages.toLocaleString() || '—'}
               </div>
-              <div className="text-xs text-gray-500">Total Messages</div>
+              <div className="text-xs text-gray-600">Total Messages</div>
             </div>
           </div>
         </div>
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 shadow-sm">
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
               <ChatBubbleLeftRightIcon className="w-5 h-5 text-white" />
@@ -319,11 +319,11 @@ export function ChatTable() {
               <div className="text-2xl font-bold text-gray-900">
                 {stats?.avgMessagesPerConversation || '—'}
               </div>
-              <div className="text-xs text-gray-500">Avg per Conversation</div>
+              <div className="text-xs text-gray-600">Avg per Conversation</div>
             </div>
           </div>
         </div>
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 shadow-sm">
+        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
               <ChatBubbleLeftRightIcon className="w-5 h-5 text-white" />
@@ -332,24 +332,24 @@ export function ChatTable() {
               <div className="text-2xl font-bold text-gray-900">
                 {stats?.activeConversations.toLocaleString() || '—'}
               </div>
-              <div className="text-xs text-gray-500">Active (5+ msgs)</div>
+              <div className="text-xs text-gray-600">Active (5+ msgs)</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200/50 shadow-sm p-4">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Search - Server-side */}
           <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
             <input
               type="text"
               placeholder="Search by name, phone, or city... (searches entire database)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
             />
             {searching && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -377,13 +377,13 @@ export function ChatTable() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="appearance-none pl-3 pr-8 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white cursor-pointer"
+                className="appearance-none pl-3 pr-8 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 bg-white cursor-pointer"
               >
                 <option value="recent">Most Recent</option>
                 <option value="messages">Most Messages</option>
                 <option value="name">Alphabetical</option>
               </select>
-              <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
             </div>
           </div>
         </div>
@@ -401,14 +401,14 @@ export function ChatTable() {
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-200 flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Lead Status:</span>
+              <span className="text-sm font-medium text-gray-700">Lead Status:</span>
               <select
                 value={filterStatus}
                 onChange={(e) => {
                   setFilterStatus(e.target.value)
                   setCurrentPage(0)
                 }}
-                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:border-blue-500"
+                className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:border-blue-500"
               >
                 <option value="all">All Status</option>
                 <option value="incomplete">Incomplete</option>
@@ -419,14 +419,14 @@ export function ChatTable() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">City:</span>
+              <span className="text-sm font-medium text-gray-700">City:</span>
               <select
                 value={filterCity}
                 onChange={(e) => {
                   setFilterCity(e.target.value)
                   setCurrentPage(0)
                 }}
-                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:border-blue-500 max-w-[200px]"
+                className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:border-blue-500 max-w-[200px]"
               >
                 <option value="all">All Cities</option>
                 {cities.map(city => (
@@ -436,14 +436,14 @@ export function ChatTable() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Source:</span>
+              <span className="text-sm font-medium text-gray-700">Source:</span>
               <select
                 value={filterSource}
                 onChange={(e) => {
                   setFilterSource(e.target.value)
                   setCurrentPage(0)
                 }}
-                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:border-blue-500 max-w-[200px]"
+                className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:border-blue-500 max-w-[200px]"
               >
                 <option value="all">All Sources</option>
                 {sources.map(src => (
@@ -453,14 +453,14 @@ export function ChatTable() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Activity:</span>
+              <span className="text-sm font-medium text-gray-700">Activity:</span>
               <select
                 value={filterMessages}
                 onChange={(e) => {
                   setFilterMessages(e.target.value)
                   setCurrentPage(0)
                 }}
-                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:border-blue-500"
+                className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm focus:border-blue-500"
               >
                 <option value="all">All Conversations</option>
                 <option value="active">Active (5+ messages)</option>
@@ -470,7 +470,7 @@ export function ChatTable() {
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800"
               >
                 <XMarkIcon className="w-4 h-4" />
                 Clear filters
@@ -502,10 +502,10 @@ export function ChatTable() {
             <ConversationCardSkeleton key={i} />
           ))
         ) : sortedConversations.length === 0 ? (
-          <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200/50">
-            <ChatBubbleLeftRightIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+            <ChatBubbleLeftRightIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-1">No conversations found</h3>
-            <p className="text-gray-500">
+            <p className="text-gray-600">
               {hasActiveFilters
                 ? 'Try adjusting your filters or search term'
                 : 'Conversations will appear here when users interact with your chatbot'
@@ -559,7 +559,7 @@ export function ChatTable() {
                   className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
                     currentPage === pageNum
                       ? 'bg-blue-600 text-white'
-                      : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   {pageNum + 1}
@@ -569,11 +569,11 @@ export function ChatTable() {
 
             {totalPages > 5 && currentPage < totalPages - 3 && (
               <>
-                <span className="px-2 text-gray-400">...</span>
+                <span className="px-2 text-gray-500">...</span>
                 <button
                   onClick={() => setCurrentPage(totalPages - 1)}
                   disabled={loading}
-                  className="w-10 h-10 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+                  className="w-10 h-10 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
                   {totalPages}
                 </button>

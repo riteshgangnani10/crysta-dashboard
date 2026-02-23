@@ -110,11 +110,11 @@ export function UserActivityChart({ dateFrom, dateTo }: ChartDateFilterProps = {
         <div className="flex items-center justify-between">
           <CardTitle>Monthly Activity Trend</CardTitle>
           <div className="flex gap-4 text-sm">
-            <span className="text-gray-500">
-              Total: <span className="font-semibold text-blue-600">{totalUsers.toLocaleString()} users</span>
+            <span className="text-gray-600">
+              Total: <span className="font-semibold text-blue-700">{totalUsers.toLocaleString()} users</span>
             </span>
-            <span className="text-gray-500">
-              <span className="font-semibold text-emerald-600">{totalMessages.toLocaleString()} messages</span>
+            <span className="text-gray-600">
+              <span className="font-semibold text-green-700">{totalMessages.toLocaleString()} messages</span>
             </span>
           </div>
         </div>
@@ -289,8 +289,8 @@ export function LeadStatusChart({ dateFrom, dateTo }: ChartDateFilterProps = {})
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Lead Status Distribution</CardTitle>
-          <span className="text-sm text-gray-500">
-            Total: <span className="font-semibold">{total.toLocaleString()}</span> leads
+          <span className="text-sm text-gray-600">
+            Total: <span className="font-semibold text-gray-900">{total.toLocaleString()}</span> leads
           </span>
         </div>
       </CardHeader>
@@ -335,7 +335,7 @@ export function LeadStatusChart({ dateFrom, dateTo }: ChartDateFilterProps = {})
                   <span className="text-sm font-semibold text-gray-900">
                     {entry.value.toLocaleString()}
                   </span>
-                  <span className="text-xs text-gray-500 ml-1">
+                  <span className="text-xs text-gray-600 ml-1">
                     ({entry.percentage}%)
                   </span>
                 </div>
@@ -398,8 +398,8 @@ export function CityDistributionChart({ dateFrom, dateTo }: ChartDateFilterProps
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Top Cities by Leads</CardTitle>
-          <span className="text-sm text-gray-500">
-            Showing top 10 of <span className="font-semibold">{total.toLocaleString()}</span> leads
+          <span className="text-sm text-gray-600">
+            Showing top 10 of <span className="font-semibold text-gray-900">{total.toLocaleString()}</span> leads
           </span>
         </div>
       </CardHeader>
@@ -412,7 +412,7 @@ export function CityDistributionChart({ dateFrom, dateTo }: ChartDateFilterProps
               dataKey="city" 
               type="category" 
               width={100} 
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 12 }}
             />
             <Tooltip 
               formatter={(value: number, name: string, props: any) => [
@@ -488,11 +488,11 @@ export function MessageVolumeChart({ dateFrom, dateTo }: ChartDateFilterProps = 
         <div className="flex items-center justify-between">
           <CardTitle>Message Volume Over Time</CardTitle>
           <div className="flex gap-4 text-sm">
-            <span className="text-gray-500">
-              Total: <span className="font-semibold text-purple-600">{totalMessages.toLocaleString()}</span>
+            <span className="text-gray-600">
+              Total: <span className="font-semibold text-purple-700">{totalMessages.toLocaleString()}</span>
             </span>
-            <span className="text-gray-500">
-              Avg/month: <span className="font-semibold">{avgPerMonth.toLocaleString()}</span>
+            <span className="text-gray-600">
+              Avg/month: <span className="font-semibold text-gray-900">{avgPerMonth.toLocaleString()}</span>
             </span>
           </div>
         </div>

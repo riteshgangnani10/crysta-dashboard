@@ -166,7 +166,7 @@ export function RecentActivity() {
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {user.name}
                     </p>
-                    <p className="text-sm text-gray-500 truncate">
+                    <p className="text-sm text-gray-600 truncate">
                       {user.location} {user.age ? `• ${user.age} yrs` : ''}
                     </p>
                   </div>
@@ -178,7 +178,7 @@ export function RecentActivity() {
                     }`}>
                       {user.lead_status}
                     </span>
-                    <span className="text-xs text-gray-500 mt-1">
+                    <span className="text-xs text-gray-600 mt-1">
                       {formatRelativeTime(user.created_at)}
                     </span>
                   </div>
@@ -200,14 +200,14 @@ export function RecentActivity() {
             ) : (
               recentChats.slice(0, 5).map((chat) => (
                 <div key={chat.id} className={`border-l-4 pl-4 ${
-                  chat.message_type === 'ai' ? 'border-blue-200' : 'border-green-200'
+                  chat.message_type === 'ai' ? 'border-blue-400' : 'border-green-400'
                 }`}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900">
                         {chat.user_name || formatPhoneNumber(chat.session_id)}
                       </p>
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      <p className="text-sm text-gray-700 mt-1 line-clamp-2">
                         {chat.message_content}
                       </p>
                       <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${
@@ -218,7 +218,7 @@ export function RecentActivity() {
                         {chat.message_type === 'ai' ? 'AI Response' : 'User'}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500 ml-4 whitespace-nowrap">
+                    <div className="text-xs text-gray-600 ml-4 whitespace-nowrap">
                       {formatRelativeTime(chat.timestamp)}
                     </div>
                   </div>

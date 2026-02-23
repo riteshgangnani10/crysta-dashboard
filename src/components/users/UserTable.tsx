@@ -371,13 +371,13 @@ export function UserTable() {
             {/* Main Search - Server-side */}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                 <input
                   type="text"
                   placeholder="Search leads by name, phone, location, spouse... (searches entire database)"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
                 />
                 {searching && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -522,19 +522,19 @@ export function UserTable() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Lead Info
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Contact & Location
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     IVF Details
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Appointment
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Lead Status
                   </th>
                 </tr>
@@ -581,10 +581,10 @@ export function UserTable() {
                             <div className="text-sm font-medium text-gray-900">
                               {user.name}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-600">
                               Age: {user.age || 'Not specified'}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-600">
                               Source: {user.source}
                             </div>
                           </div>
@@ -595,9 +595,9 @@ export function UserTable() {
                           <PhoneIcon className="h-4 w-4 mr-1" />
                           {formatPhoneNumber(user.phone)}
                         </div>
-                        <div className="text-sm text-gray-500">{user.location}</div>
+                        <div className="text-sm text-gray-600">{user.location}</div>
                         {user.preferredCenter && (
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-600">
                             Preferred: {user.preferredCenter}
                           </div>
                         )}
@@ -609,12 +609,12 @@ export function UserTable() {
                           </div>
                         )}
                         {user.tryingDuration && (
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-600">
                             Trying: {user.tryingDuration}
                           </div>
                         )}
                         {user.previousTreatments && (
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-600">
                             Previous: {user.previousTreatments}
                           </div>
                         )}
@@ -622,23 +622,23 @@ export function UserTable() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {user.appointmentDate ? (
                           <div className="flex items-center text-sm text-gray-900">
-                            <CalendarIcon className="h-4 w-4 mr-1 text-green-500" />
+                            <CalendarIcon className="h-4 w-4 mr-1 text-green-600" />
                             <div>
                               <div>{formatDate(user.appointmentDate)}</div>
                               {user.appointmentTime && (
-                                <div className="text-gray-500">{user.appointmentTime}</div>
+                                <div className="text-gray-600">{user.appointmentTime}</div>
                               )}
                             </div>
                           </div>
                         ) : (
-                          <div className="text-sm text-gray-500">No appointment</div>
+                          <div className="text-sm text-gray-500 italic">No appointment</div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getLeadStatusColor(user.leadStatus.toLowerCase())}`}>
                           {user.leadStatus}
                         </span>
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-gray-600 mt-1">
                           Updated: {formatRelativeTime(user.updated_at)}
                         </div>
                       </td>
@@ -684,7 +684,7 @@ export function UserTable() {
                       className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
                         currentPage === pageNum
                           ? 'bg-blue-600 text-white'
-                          : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       {pageNum + 1}
@@ -694,11 +694,11 @@ export function UserTable() {
 
                 {totalPages > 5 && currentPage < totalPages - 3 && (
                   <>
-                    <span className="px-2 text-gray-400">...</span>
+                    <span className="px-2 text-gray-500">...</span>
                     <button
                       onClick={() => setCurrentPage(totalPages - 1)}
                       disabled={loading}
-                      className="w-10 h-10 rounded-lg text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+                      className="w-10 h-10 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                     >
                       {totalPages}
                     </button>

@@ -177,12 +177,13 @@ export function formatLeadStatus(status: string): string {
 // Get lead status color for UI
 export function getLeadStatusColor(status: string): string {
   const colorMap: Record<string, string> = {
-    incomplete: 'bg-yellow-100 text-yellow-800',
+    incomplete: 'bg-amber-100 text-amber-900',
+    complete: 'bg-purple-100 text-purple-800',
     qualified: 'bg-blue-100 text-blue-800',
     converted: 'bg-green-100 text-green-800',
     lost: 'bg-red-100 text-red-800',
   }
-  
+
   return colorMap[status] || 'bg-gray-100 text-gray-800'
 }
 

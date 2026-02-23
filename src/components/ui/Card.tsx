@@ -9,9 +9,9 @@ interface CardProps {
 
 export function Card({ children, className, variant = 'default' }: CardProps) {
   const variants = {
-    default: 'bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-lg hover:shadow-xl',
-    gradient: 'bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 backdrop-blur-sm border border-gray-200/30 shadow-xl hover:shadow-2xl',
-    glass: 'bg-white/70 backdrop-blur-xl border border-white/20 shadow-2xl hover:shadow-3xl'
+    default: 'bg-white backdrop-blur-sm border border-gray-200 shadow-sm hover:shadow-md',
+    gradient: 'bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 backdrop-blur-sm border border-gray-200 shadow-md hover:shadow-lg',
+    glass: 'bg-white/80 backdrop-blur-xl border border-gray-200 shadow-lg hover:shadow-xl'
   }
 
   return (
@@ -32,7 +32,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className }: CardHeaderProps) {
   return (
-    <div className={cn('px-6 py-5 border-b border-gray-200/30', className)}>
+    <div className={cn('px-6 py-5 border-b border-gray-200', className)}>
       {children}
     </div>
   )
@@ -71,7 +71,7 @@ interface CardDescriptionProps {
 
 export function CardDescription({ children, className }: CardDescriptionProps) {
   return (
-    <p className={cn('text-sm text-gray-600 leading-relaxed mt-1', className)}>
+    <p className={cn('text-sm text-gray-700 leading-relaxed mt-1', className)}>
       {children}
     </p>
   )
