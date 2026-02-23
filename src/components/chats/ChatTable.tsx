@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { 
+import { useState, useEffect, useRef } from 'react'
+import {
   MagnifyingGlassIcon,
   ArrowPathIcon,
   FunnelIcon,
@@ -12,11 +12,12 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/react/24/outline'
-import { 
+import {
   getGlobalStats,
   getConversationList,
   searchConversations,
   getUniqueCities,
+  getUniqueSources,
   clearCache,
   type GlobalStats,
   type ConversationSummary,
@@ -26,6 +27,7 @@ import { formatPhoneNumber } from '@/lib/dataTransformers'
 import { ConversationCard, ConversationCardSkeleton, type ConversationSummary as CardConversationSummary } from './ConversationCard'
 import { ConversationModal } from './ConversationModal'
 import { Button } from '@/components/ui/Button'
+import { DateRangeFilter, type DateRange, type DatePreset } from '@/components/ui/DateRangeFilter'
 
 const PAGE_SIZE = 50
 
@@ -34,42 +36,48 @@ export function ChatTable() {
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
   const [stats, setStats] = useState<GlobalStats | null>(null)
   const [cities, setCities] = useState<string[]>([])
-  
+  const [sources, setSources] = useState<string[]>([])
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
   const [hasMore, setHasMore] = useState(false)
-  
+
   // Loading states
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [searching, setSearching] = useState(false)
-  
+
   // Filter state
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterCity, setFilterCity] = useState<string>('all')
+  const [filterSource, setFilterSource] = useState<string>('all')
   const [filterMessages, setFilterMessages] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'recent' | 'messages' | 'name'>('recent')
   const [showFilters, setShowFilters] = useState(false)
-  
+
+  // Date filter
+  const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null })
+  const [datePreset, setDatePreset] = useState<DatePreset>('allTime')
+
   // Modal state
   const [selectedConversation, setSelectedConversation] = useState<CardConversationSummary | null>(null)
-  
+
   // Debounce search
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
+
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearch(searchTerm)
       setCurrentPage(0) // Reset to first page on search
     }, 300)
-    
+
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current)
@@ -85,18 +93,20 @@ export function ChatTable() {
   // Load conversations when filters change
   useEffect(() => {
     loadConversations()
-  }, [currentPage, debouncedSearch, filterStatus, filterCity, filterMessages])
+  }, [currentPage, debouncedSearch, filterStatus, filterCity, filterSource, filterMessages, dateRange])
 
   const loadInitialData = async () => {
     try {
-      // Load stats and cities in parallel
-      const [statsData, citiesData] = await Promise.all([
+      // Load stats, cities, and sources in parallel
+      const [statsData, citiesData, sourcesData] = await Promise.all([
         getGlobalStats(),
-        getUniqueCities()
+        getUniqueCities(),
+        getUniqueSources()
       ])
-      
+
       setStats(statsData)
       setCities(citiesData)
+      setSources(sourcesData)
     } catch (error) {
       console.error('Error loading initial data:', error)
     }
@@ -105,10 +115,10 @@ export function ChatTable() {
   const loadConversations = async () => {
     setLoading(true)
     setSearching(!!debouncedSearch)
-    
+
     try {
       let response: ConversationListResponse
-      
+
       if (debouncedSearch) {
         // Use server-side search
         response = await searchConversations(debouncedSearch, currentPage, PAGE_SIZE)
@@ -117,10 +127,13 @@ export function ChatTable() {
         response = await getConversationList(currentPage, PAGE_SIZE, undefined, {
           leadStatus: filterStatus !== 'all' ? filterStatus : undefined,
           city: filterCity !== 'all' ? filterCity : undefined,
-          minMessages: filterMessages === 'active' ? 5 : undefined
+          source: filterSource !== 'all' ? filterSource : undefined,
+          minMessages: filterMessages === 'active' ? 5 : undefined,
+          dateFrom: dateRange.from || undefined,
+          dateTo: dateRange.to || undefined,
         })
       }
-      
+
       setConversations(response.conversations)
       setTotalCount(response.total)
       setHasMore(response.hasMore)
@@ -135,7 +148,7 @@ export function ChatTable() {
   const syncData = async () => {
     setSyncing(true)
     clearCache() // Clear cache to get fresh data
-    
+
     try {
       await Promise.all([
         loadInitialData(),
@@ -150,13 +163,16 @@ export function ChatTable() {
     // For export, we'll fetch more data
     const allData: ConversationSummary[] = []
     let page = 0
-    
+
     while (true) {
       const response = await getConversationList(page, 1000, debouncedSearch || undefined, {
         leadStatus: filterStatus !== 'all' ? filterStatus : undefined,
-        city: filterCity !== 'all' ? filterCity : undefined
+        city: filterCity !== 'all' ? filterCity : undefined,
+        source: filterSource !== 'all' ? filterSource : undefined,
+        dateFrom: dateRange.from || undefined,
+        dateTo: dateRange.to || undefined,
       })
-      
+
       allData.push(...response.conversations)
       if (!response.hasMore) break
       page++
@@ -191,12 +207,15 @@ export function ChatTable() {
     setDebouncedSearch('')
     setFilterStatus('all')
     setFilterCity('all')
+    setFilterSource('all')
     setFilterMessages('all')
     setSortBy('recent')
+    setDateRange({ from: null, to: null })
+    setDatePreset('allTime')
     setCurrentPage(0)
   }
 
-  const hasActiveFilters = searchTerm || filterStatus !== 'all' || filterCity !== 'all' || filterMessages !== 'all'
+  const hasActiveFilters = searchTerm || filterStatus !== 'all' || filterCity !== 'all' || filterSource !== 'all' || filterMessages !== 'all' || dateRange.from || dateRange.to
 
   // Convert server response to card format
   const cardConversations: CardConversationSummary[] = conversations.map(conv => ({
@@ -369,6 +388,15 @@ export function ChatTable() {
           </div>
         </div>
 
+        {/* Date Range Filter */}
+        <DateRangeFilter
+          dateRange={dateRange}
+          onDateRangeChange={(range) => { setDateRange(range); setCurrentPage(0) }}
+          activePreset={datePreset}
+          onPresetChange={setDatePreset}
+          className="mt-4 pt-4 border-t border-gray-200"
+        />
+
         {/* Expanded Filters */}
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-200 flex flex-wrap items-center gap-4">
@@ -403,6 +431,23 @@ export function ChatTable() {
                 <option value="all">All Cities</option>
                 {cities.map(city => (
                   <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Source:</span>
+              <select
+                value={filterSource}
+                onChange={(e) => {
+                  setFilterSource(e.target.value)
+                  setCurrentPage(0)
+                }}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:border-blue-500 max-w-[200px]"
+              >
+                <option value="all">All Sources</option>
+                {sources.map(src => (
+                  <option key={src} value={src}>{src}</option>
                 ))}
               </select>
             </div>
@@ -461,7 +506,7 @@ export function ChatTable() {
             <ChatBubbleLeftRightIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-1">No conversations found</h3>
             <p className="text-gray-500">
-              {hasActiveFilters 
+              {hasActiveFilters
                 ? 'Try adjusting your filters or search term'
                 : 'Conversations will appear here when users interact with your chatbot'
               }
@@ -491,7 +536,7 @@ export function ChatTable() {
             <ChevronLeftIcon className="w-4 h-4" />
             Previous
           </Button>
-          
+
           <div className="flex items-center gap-1">
             {/* Page numbers */}
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -505,7 +550,7 @@ export function ChatTable() {
               } else {
                 pageNum = currentPage - 2 + i
               }
-              
+
               return (
                 <button
                   key={pageNum}
@@ -521,7 +566,7 @@ export function ChatTable() {
                 </button>
               )
             })}
-            
+
             {totalPages > 5 && currentPage < totalPages - 3 && (
               <>
                 <span className="px-2 text-gray-400">...</span>
@@ -535,7 +580,7 @@ export function ChatTable() {
               </>
             )}
           </div>
-          
+
           <Button
             onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
             disabled={!hasMore || loading}

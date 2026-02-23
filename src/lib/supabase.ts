@@ -72,32 +72,61 @@ export interface DisplayChat {
   timestamp: string
 }
 
+// Date filter interface
+export interface DateFilter {
+  dateFrom?: string | null  // "YYYY-MM-DD"
+  dateTo?: string | null    // "YYYY-MM-DD"
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyDateFilter(query: any, dateField: string, dateFrom?: string | null, dateTo?: string | null) {
+  if (dateFrom) {
+    query = query.gte(dateField, `${dateFrom}T00:00:00.000Z`)
+  }
+  if (dateTo) {
+    query = query.lte(dateField, `${dateTo}T23:59:59.999Z`)
+  }
+  return query
+}
+
 // Database helper functions - Updated for actual schema
-export const getUsersCount = async () => {
-  const { count, error } = await supabase
+export const getUsersCount = async (dateFilter?: DateFilter) => {
+  let query = supabase
     .from('users')
     .select('*', { count: 'exact', head: true })
-  
+
+  query = applyDateFilter(query, 'created_at', dateFilter?.dateFrom, dateFilter?.dateTo)
+
+  const { count, error } = await query
   if (error) throw error
   return count || 0
 }
 
-export const getChatHistoryCount = async () => {
-  const { count, error } = await supabase
+export const getChatHistoryCount = async (dateFilter?: DateFilter) => {
+  let query = supabase
     .from('n8n_chat_histories')
     .select('*', { count: 'exact', head: true })
-  
+
+  query = applyDateFilter(query, 'timestamp', dateFilter?.dateFrom, dateFilter?.dateTo)
+
+  const { count, error } = await query
   if (error) throw error
   return count || 0
 }
 
-export const getActiveUsersToday = async () => {
-  const today = new Date().toISOString().split('T')[0]
-  const { count, error } = await supabase
+export const getActiveUsersToday = async (dateFilter?: DateFilter) => {
+  let query = supabase
     .from('users')
     .select('*', { count: 'exact', head: true })
-    .gte('updated_at', today)
-  
+
+  if (dateFilter?.dateFrom || dateFilter?.dateTo) {
+    query = applyDateFilter(query, 'updated_at', dateFilter.dateFrom, dateFilter.dateTo)
+  } else {
+    const today = new Date().toISOString().split('T')[0]
+    query = query.gte('updated_at', today)
+  }
+
+  const { count, error } = await query
   if (error) throw error
   return count || 0
 }
@@ -124,11 +153,14 @@ export const getRecentChats = async (limit = 20) => {
   return data as ChatHistory[]
 }
 
-export const getUserAnalytics = async () => {
-  const { data, error } = await supabase
+export const getUserAnalytics = async (dateFilter?: DateFilter) => {
+  let query = supabase
     .from('users')
     .select('created_at, age, user_city, lead_status, source')
-  
+
+  query = applyDateFilter(query, 'created_at', dateFilter?.dateFrom, dateFilter?.dateTo)
+
+  const { data, error } = await query
   if (error) throw error
   return data
 }
@@ -152,12 +184,15 @@ export const getLeadStatusDistribution = async () => {
   return data
 }
 
-export const getAppointmentStats = async () => {
-  const { data, error } = await supabase
+export const getAppointmentStats = async (dateFilter?: DateFilter) => {
+  let query = supabase
     .from('users')
     .select('appointment_date, appointment_time, lead_status')
     .not('appointment_date', 'is', null)
-  
+
+  query = applyDateFilter(query, 'created_at', dateFilter?.dateFrom, dateFilter?.dateTo)
+
+  const { data, error } = await query
   if (error) throw error
   return data
 }
@@ -224,22 +259,29 @@ export interface GlobalStats {
   avgMessagesPerConversation: number
 }
 
-export const getGlobalStats = async (): Promise<GlobalStats> => {
-  const cacheKey = 'global_stats'
+export const getGlobalStats = async (dateFilter?: DateFilter): Promise<GlobalStats> => {
+  const cacheKey = `global_stats_${dateFilter?.dateFrom || 'all'}_${dateFilter?.dateTo || 'all'}`
   const cached = getCached<GlobalStats>(cacheKey)
   if (cached) return cached
 
   // Get counts in parallel
-  const [usersCount, messagesCount, conversationsData] = await Promise.all([
-    supabase.from('users').select('*', { count: 'exact', head: true }),
-    supabase.from('n8n_chat_histories').select('*', { count: 'exact', head: true }),
-    // Get conversation stats by counting messages per session
-    getConversationStats()
+  const [usersResult, messagesResult, conversationsData] = await Promise.all([
+    (async () => {
+      let q = supabase.from('users').select('*', { count: 'exact', head: true })
+      q = applyDateFilter(q, 'created_at', dateFilter?.dateFrom, dateFilter?.dateTo)
+      return q
+    })(),
+    (async () => {
+      let q = supabase.from('n8n_chat_histories').select('*', { count: 'exact', head: true })
+      q = applyDateFilter(q, 'timestamp', dateFilter?.dateFrom, dateFilter?.dateTo)
+      return q
+    })(),
+    getConversationStats(dateFilter)
   ])
 
   const stats: GlobalStats = {
-    totalUsers: usersCount.count || 0,
-    totalMessages: messagesCount.count || 0,
+    totalUsers: usersResult.count || 0,
+    totalMessages: messagesResult.count || 0,
     totalConversations: conversationsData.totalConversations,
     activeConversations: conversationsData.activeConversations,
     avgMessagesPerConversation: conversationsData.avgMessages
@@ -250,11 +292,11 @@ export const getGlobalStats = async (): Promise<GlobalStats> => {
 }
 
 // Get conversation stats (requires aggregation)
-async function getConversationStats() {
+async function getConversationStats(dateFilter?: DateFilter) {
   // We need to count unique session_ids and messages per session
   // Since Supabase doesn't support GROUP BY directly, we'll use a different approach
-  
-  const cacheKey = 'conversation_stats'
+
+  const cacheKey = `conversation_stats_${dateFilter?.dateFrom || 'all'}_${dateFilter?.dateTo || 'all'}`
   const cached = getCached<{ totalConversations: number; activeConversations: number; avgMessages: number }>(cacheKey)
   if (cached) return cached
 
@@ -263,20 +305,24 @@ async function getConversationStats() {
   const sessionCounts = new Map<string, number>()
   let page = 0
   const pageSize = 1000
-  
+
   while (true) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('n8n_chat_histories')
       .select('session_id')
-      .range(page * pageSize, (page + 1) * pageSize - 1)
-    
+
+    query = applyDateFilter(query, 'timestamp', dateFilter?.dateFrom, dateFilter?.dateTo)
+    query = query.range(page * pageSize, (page + 1) * pageSize - 1)
+
+    const { data, error } = await query
+
     if (error) throw error
     if (!data || data.length === 0) break
-    
+
     data.forEach(row => {
       sessionCounts.set(row.session_id, (sessionCounts.get(row.session_id) || 0) + 1)
     })
-    
+
     page++
     if (page > 100) break // Safety limit
   }
@@ -334,6 +380,11 @@ export const getConversationList = async (
     minMessages?: number
     dateFrom?: string
     dateTo?: string
+    source?: string
+    ageMin?: number
+    ageMax?: number
+    appointmentDateFrom?: string
+    appointmentDateTo?: string
   }
 ): Promise<ConversationListResponse> => {
   // Build the query for users (which represent conversations)
@@ -345,17 +396,37 @@ export const getConversationList = async (
   if (filters?.leadStatus && filters.leadStatus !== 'all') {
     query = query.eq('lead_status', filters.leadStatus)
   }
-  
+
   if (filters?.city && filters.city !== 'all') {
     query = query.eq('user_city', filters.city)
   }
 
   if (filters?.dateFrom) {
-    query = query.gte('created_at', filters.dateFrom)
+    query = query.gte('created_at', `${filters.dateFrom}T00:00:00.000Z`)
   }
 
   if (filters?.dateTo) {
-    query = query.lte('created_at', filters.dateTo)
+    query = query.lte('created_at', `${filters.dateTo}T23:59:59.999Z`)
+  }
+
+  if (filters?.source && filters.source !== 'all') {
+    query = query.eq('source', filters.source)
+  }
+
+  if (filters?.ageMin !== undefined) {
+    query = query.gte('age', filters.ageMin)
+  }
+
+  if (filters?.ageMax !== undefined) {
+    query = query.lte('age', filters.ageMax)
+  }
+
+  if (filters?.appointmentDateFrom) {
+    query = query.gte('appointment_date', filters.appointmentDateFrom)
+  }
+
+  if (filters?.appointmentDateTo) {
+    query = query.lte('appointment_date', filters.appointmentDateTo)
   }
 
   // Apply search (server-side)
@@ -627,8 +698,8 @@ export interface CityAnalytics {
   percentage: number
 }
 
-export const getCityAnalytics = async (): Promise<CityAnalytics[]> => {
-  const cacheKey = 'city_analytics'
+export const getCityAnalytics = async (dateFilter?: DateFilter): Promise<CityAnalytics[]> => {
+  const cacheKey = `city_analytics_${dateFilter?.dateFrom || 'all'}_${dateFilter?.dateTo || 'all'}`
   const cached = getCached<CityAnalytics[]>(cacheKey)
   if (cached) return cached
 
@@ -639,10 +710,14 @@ export const getCityAnalytics = async (): Promise<CityAnalytics[]> => {
   let total = 0
 
   while (true) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('users')
       .select('user_city')
-      .range(page * pageSize, (page + 1) * pageSize - 1)
+
+    query = applyDateFilter(query, 'created_at', dateFilter?.dateFrom, dateFilter?.dateTo)
+    query = query.range(page * pageSize, (page + 1) * pageSize - 1)
+
+    const { data, error } = await query
 
     if (error) throw error
     if (!data || data.length === 0) break
@@ -676,8 +751,8 @@ export interface LeadStatusAnalytics {
   percentage: number
 }
 
-export const getLeadStatusAnalytics = async (): Promise<LeadStatusAnalytics[]> => {
-  const cacheKey = 'lead_status_analytics'
+export const getLeadStatusAnalytics = async (dateFilter?: DateFilter): Promise<LeadStatusAnalytics[]> => {
+  const cacheKey = `lead_status_analytics_${dateFilter?.dateFrom || 'all'}_${dateFilter?.dateTo || 'all'}`
   const cached = getCached<LeadStatusAnalytics[]>(cacheKey)
   if (cached) return cached
 
@@ -687,10 +762,14 @@ export const getLeadStatusAnalytics = async (): Promise<LeadStatusAnalytics[]> =
   let total = 0
 
   while (true) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('users')
       .select('lead_status')
-      .range(page * pageSize, (page + 1) * pageSize - 1)
+
+    query = applyDateFilter(query, 'created_at', dateFilter?.dateFrom, dateFilter?.dateTo)
+    query = query.range(page * pageSize, (page + 1) * pageSize - 1)
+
+    const { data, error } = await query
 
     if (error) throw error
     if (!data || data.length === 0) break
@@ -724,8 +803,8 @@ export interface MonthlyAnalytics {
   conversations: number
 }
 
-export const getMonthlyAnalytics = async (): Promise<MonthlyAnalytics[]> => {
-  const cacheKey = 'monthly_analytics'
+export const getMonthlyAnalytics = async (dateFilter?: DateFilter): Promise<MonthlyAnalytics[]> => {
+  const cacheKey = `monthly_analytics_${dateFilter?.dateFrom || 'all'}_${dateFilter?.dateTo || 'all'}`
   const cached = getCached<MonthlyAnalytics[]>(cacheKey)
   if (cached) return cached
 
@@ -736,10 +815,14 @@ export const getMonthlyAnalytics = async (): Promise<MonthlyAnalytics[]> => {
   const pageSize = 1000
 
   while (true) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('users')
       .select('created_at')
-      .range(page * pageSize, (page + 1) * pageSize - 1)
+
+    query = applyDateFilter(query, 'created_at', dateFilter?.dateFrom, dateFilter?.dateTo)
+    query = query.range(page * pageSize, (page + 1) * pageSize - 1)
+
+    const { data, error } = await query
 
     if (error) throw error
     if (!data || data.length === 0) break
@@ -759,10 +842,14 @@ export const getMonthlyAnalytics = async (): Promise<MonthlyAnalytics[]> => {
   // Get message dates
   page = 0
   while (true) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('n8n_chat_histories')
       .select('timestamp, session_id')
-      .range(page * pageSize, (page + 1) * pageSize - 1)
+
+    query = applyDateFilter(query, 'timestamp', dateFilter?.dateFrom, dateFilter?.dateTo)
+    query = query.range(page * pageSize, (page + 1) * pageSize - 1)
+
+    const { data, error } = await query
 
     if (error) throw error
     if (!data || data.length === 0) break
@@ -822,6 +909,39 @@ export const getUniqueCities = async (): Promise<string[]> => {
   }
 
   const result = Array.from(cities).sort()
+  setCache(cacheKey, result)
+  return result
+}
+
+// Get all unique sources for filter dropdown
+export const getUniqueSources = async (): Promise<string[]> => {
+  const cacheKey = 'unique_sources'
+  const cached = getCached<string[]>(cacheKey)
+  if (cached) return cached
+
+  const sources = new Set<string>()
+  let page = 0
+  const pageSize = 1000
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('source')
+      .not('source', 'is', null)
+      .range(page * pageSize, (page + 1) * pageSize - 1)
+
+    if (error) throw error
+    if (!data || data.length === 0) break
+
+    data.forEach(row => {
+      if (row.source) sources.add(row.source)
+    })
+
+    page++
+    if (page > 10) break
+  }
+
+  const result = Array.from(sources).sort()
   setCache(cacheKey, result)
   return result
 }

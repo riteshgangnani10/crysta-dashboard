@@ -1,6 +1,13 @@
+'use client'
+
+import { useState } from 'react'
 import { UserActivityChart, HourlyActivityChart, LeadStatusChart, CityDistributionChart } from '@/components/dashboard/Charts'
+import { DateRangeFilter, type DateRange, type DatePreset } from '@/components/ui/DateRangeFilter'
 
 export default function AnalyticsPage() {
+  const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null })
+  const [datePreset, setDatePreset] = useState<DatePreset>('allTime')
+
   return (
     <div className="space-y-6">
       <div>
@@ -10,14 +17,21 @@ export default function AnalyticsPage() {
         </p>
       </div>
 
+      <DateRangeFilter
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        activePreset={datePreset}
+        onPresetChange={setDatePreset}
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <UserActivityChart />
-        <HourlyActivityChart />
+        <UserActivityChart dateFrom={dateRange.from} dateTo={dateRange.to} />
+        <HourlyActivityChart dateFrom={dateRange.from} dateTo={dateRange.to} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <LeadStatusChart />
-        <CityDistributionChart />
+        <LeadStatusChart dateFrom={dateRange.from} dateTo={dateRange.to} />
+        <CityDistributionChart dateFrom={dateRange.from} dateTo={dateRange.to} />
       </div>
     </div>
   )

@@ -26,19 +26,46 @@ export interface HourlyStats {
 }
 
 export class AnalyticsService {
-  static async getMonthlyAnalytics(months = 12): Promise<MonthlyStats[]> {
+  static async getMonthlyAnalytics(options?: { months?: number; dateFrom?: string; dateTo?: string }): Promise<MonthlyStats[]> {
+    const { months = 12, dateFrom, dateTo } = options || {}
     const monthlyData: MonthlyStats[] = []
-    
-    for (let i = 0; i < months; i++) {
-      const date = new Date()
-      date.setMonth(date.getMonth() - i)
-      const year = date.getFullYear()
-      const month = date.getMonth() + 1
-      const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-      
-      // Get start and end of month
-      const startOfMonth = new Date(year, month - 1, 1).toISOString()
-      const endOfMonth = new Date(year, month, 0, 23, 59, 59).toISOString()
+
+    // Build list of month ranges
+    const monthRanges: { startOfMonth: string; endOfMonth: string; monthName: string; year: number }[] = []
+
+    if (dateFrom && dateTo) {
+      const start = new Date(dateFrom)
+      const end = new Date(dateTo)
+      const current = new Date(start.getFullYear(), start.getMonth(), 1)
+      while (current <= end) {
+        const y = current.getFullYear()
+        const m = current.getMonth() + 1
+        monthRanges.push({
+          startOfMonth: new Date(y, m - 1, 1).toISOString(),
+          endOfMonth: new Date(y, m, 0, 23, 59, 59).toISOString(),
+          monthName: current.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          year: y,
+        })
+        current.setMonth(current.getMonth() + 1)
+      }
+    } else {
+      for (let i = 0; i < months; i++) {
+        const date = new Date()
+        date.setMonth(date.getMonth() - i)
+        const y = date.getFullYear()
+        const m = date.getMonth() + 1
+        monthRanges.push({
+          startOfMonth: new Date(y, m - 1, 1).toISOString(),
+          endOfMonth: new Date(y, m, 0, 23, 59, 59).toISOString(),
+          monthName: date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          year: y,
+        })
+      }
+      monthRanges.reverse()
+    }
+
+    for (const range of monthRanges) {
+      const { startOfMonth, endOfMonth, monthName, year } = range
       
       try {
         // Get leads for the month
@@ -110,18 +137,39 @@ export class AnalyticsService {
       }
     }
     
-    return monthlyData.reverse() // Return in chronological order
+    return monthlyData // Already in chronological order
   }
   
-  static async getDailyAnalytics(days = 30): Promise<DailyStats[]> {
+  static async getDailyAnalytics(options?: { days?: number; dateFrom?: string; dateTo?: string }): Promise<DailyStats[]> {
+    const { days = 30, dateFrom, dateTo } = options || {}
     const dailyData: DailyStats[] = []
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date()
-      date.setDate(date.getDate() - i)
-      const dateStr = date.toISOString().split('T')[0]
-      const displayDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      
+
+    // Build list of day ranges
+    const dayRanges: { dateStr: string; displayDate: string }[] = []
+
+    if (dateFrom && dateTo) {
+      const start = new Date(dateFrom)
+      const end = new Date(dateTo)
+      const current = new Date(start)
+      while (current <= end) {
+        dayRanges.push({
+          dateStr: current.toISOString().split('T')[0],
+          displayDate: current.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        })
+        current.setDate(current.getDate() + 1)
+      }
+    } else {
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date()
+        date.setDate(date.getDate() - i)
+        dayRanges.push({
+          dateStr: date.toISOString().split('T')[0],
+          displayDate: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        })
+      }
+    }
+
+    for (const { dateStr, displayDate } of dayRanges) {
       const startOfDay = `${dateStr}T00:00:00.000Z`
       const endOfDay = `${dateStr}T23:59:59.999Z`
       
@@ -169,19 +217,28 @@ export class AnalyticsService {
     return dailyData
   }
   
-  static async getHourlyAnalytics(): Promise<HourlyStats[]> {
+  static async getHourlyAnalytics(options?: { dateFrom?: string; dateTo?: string }): Promise<HourlyStats[]> {
+    const { dateFrom, dateTo } = options || {}
     const hourlyData: HourlyStats[] = []
-    
-    // Get data for the last 24 hours
-    const now = new Date()
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-    
+
+    let rangeStart: string
+    let rangeEnd: string
+
+    if (dateFrom && dateTo) {
+      rangeStart = `${dateFrom}T00:00:00.000Z`
+      rangeEnd = `${dateTo}T23:59:59.999Z`
+    } else {
+      const now = new Date()
+      rangeEnd = now.toISOString()
+      rangeStart = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
+    }
+
     try {
       const { data: messagesData } = await supabase
         .from('n8n_chat_histories')
         .select('timestamp, session_id')
-        .gte('timestamp', yesterday.toISOString())
-        .lte('timestamp', now.toISOString())
+        .gte('timestamp', rangeStart)
+        .lte('timestamp', rangeEnd)
       
       // Group by hour
       const hourlyStats: Record<number, { messages: number; users: Set<string> }> = {}
@@ -216,12 +273,21 @@ export class AnalyticsService {
     return hourlyData
   }
   
-  static async getOverallStats() {
+  static async getOverallStats(dateFilter?: { dateFrom?: string; dateTo?: string }) {
     try {
+      const buildQuery = (table: string, field: string, headOnly: boolean) => {
+        let q = headOnly
+          ? supabase.from(table).select('*', { count: 'exact', head: true })
+          : supabase.from(table).select('session_id')
+        if (dateFilter?.dateFrom) q = q.gte(field, `${dateFilter.dateFrom}T00:00:00.000Z`)
+        if (dateFilter?.dateTo) q = q.lte(field, `${dateFilter.dateTo}T23:59:59.999Z`)
+        return q
+      }
+
       const [usersResult, messagesResult, conversationsResult] = await Promise.all([
-        supabase.from('users').select('*', { count: 'exact', head: true }),
-        supabase.from('n8n_chat_histories').select('*', { count: 'exact', head: true }),
-        supabase.from('n8n_chat_histories').select('session_id')
+        buildQuery('users', 'created_at', true),
+        buildQuery('n8n_chat_histories', 'timestamp', true),
+        buildQuery('n8n_chat_histories', 'timestamp', false)
       ])
       
       const uniqueConversations = new Set(conversationsResult.data?.map(c => c.session_id)).size

@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { User, supabase, getUniqueCities, clearCache } from '@/lib/supabase'
-import { 
-  transformUser, 
-  formatPhoneNumber, 
-  getInitials, 
-  formatDate, 
+import { DateRangeFilter, type DateRange, type DatePreset } from '@/components/ui/DateRangeFilter'
+import { supabase, getUniqueCities, getUniqueSources, clearCache } from '@/lib/supabase'
+import {
+  transformUser,
+  formatPhoneNumber,
+  getInitials,
+  formatDate,
   formatRelativeTime,
   getLeadStatusColor
 } from '@/lib/dataTransformers'
@@ -32,35 +32,45 @@ export function UserTable() {
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [searching, setSearching] = useState(false)
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(0)
   const [totalUsers, setTotalUsers] = useState(0)
   const [hasMore, setHasMore] = useState(false)
-  
+
   // Search and filters
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterCity, setFilterCity] = useState<string>('all')
+  const [filterSource, setFilterSource] = useState<string>('all')
+  const [filterAgeMin, setFilterAgeMin] = useState<string>('')
+  const [filterAgeMax, setFilterAgeMax] = useState<string>('')
+  const [filterApptFrom, setFilterApptFrom] = useState<string>('')
+  const [filterApptTo, setFilterApptTo] = useState<string>('')
   const [showFilters, setShowFilters] = useState(false)
-  
+
+  // Date filter
+  const [dateRange, setDateRange] = useState<DateRange>({ from: null, to: null })
+  const [datePreset, setDatePreset] = useState<DatePreset>('allTime')
+
   // Filter options
   const [cities, setCities] = useState<string[]>([])
-  
+  const [sources, setSources] = useState<string[]>([])
+
   // Debounce search
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
+
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearch(searchTerm)
       setCurrentPage(0) // Reset to first page on search
     }, 300)
-    
+
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current)
@@ -70,27 +80,31 @@ export function UserTable() {
 
   // Load initial data
   useEffect(() => {
-    loadCities()
+    loadFilterOptions()
   }, [])
 
   // Load users when filters change
   useEffect(() => {
     loadUsers()
-  }, [currentPage, debouncedSearch, filterStatus, filterCity])
+  }, [currentPage, debouncedSearch, filterStatus, filterCity, filterSource, filterAgeMin, filterAgeMax, filterApptFrom, filterApptTo, dateRange])
 
-  const loadCities = async () => {
+  const loadFilterOptions = async () => {
     try {
-      const citiesData = await getUniqueCities()
+      const [citiesData, sourcesData] = await Promise.all([
+        getUniqueCities(),
+        getUniqueSources()
+      ])
       setCities(citiesData)
+      setSources(sourcesData)
     } catch (error) {
-      console.error('Error loading cities:', error)
+      console.error('Error loading filter options:', error)
     }
   }
 
   const loadUsers = async () => {
     setLoading(true)
     setSearching(!!debouncedSearch)
-    
+
     try {
       // Build the query
       let query = supabase
@@ -107,9 +121,37 @@ export function UserTable() {
       if (filterStatus !== 'all') {
         query = query.eq('lead_status', filterStatus)
       }
-      
+
       if (filterCity !== 'all') {
         query = query.eq('user_city', filterCity)
+      }
+
+      if (filterSource !== 'all') {
+        query = query.eq('source', filterSource)
+      }
+
+      // Date filter on created_at
+      if (dateRange.from) {
+        query = query.gte('created_at', `${dateRange.from}T00:00:00.000Z`)
+      }
+      if (dateRange.to) {
+        query = query.lte('created_at', `${dateRange.to}T23:59:59.999Z`)
+      }
+
+      // Age range filter
+      if (filterAgeMin) {
+        query = query.gte('age', parseInt(filterAgeMin))
+      }
+      if (filterAgeMax) {
+        query = query.lte('age', parseInt(filterAgeMax))
+      }
+
+      // Appointment date filter
+      if (filterApptFrom) {
+        query = query.gte('appointment_date', filterApptFrom)
+      }
+      if (filterApptTo) {
+        query = query.lte('appointment_date', filterApptTo)
       }
 
       // Order and paginate
@@ -136,7 +178,7 @@ export function UserTable() {
   const syncData = async () => {
     setSyncing(true)
     clearCache()
-    await Promise.all([loadCities(), loadUsers()])
+    await Promise.all([loadFilterOptions(), loadUsers()])
     setSyncing(false)
   }
 
@@ -145,6 +187,13 @@ export function UserTable() {
     setDebouncedSearch('')
     setFilterStatus('all')
     setFilterCity('all')
+    setFilterSource('all')
+    setFilterAgeMin('')
+    setFilterAgeMax('')
+    setFilterApptFrom('')
+    setFilterApptTo('')
+    setDateRange({ from: null, to: null })
+    setDatePreset('allTime')
     setCurrentPage(0)
   }
 
@@ -152,31 +201,56 @@ export function UserTable() {
     // For export, fetch more data
     const allUsers: DisplayUser[] = []
     let page = 0
-    
+
     while (true) {
       let query = supabase
         .from('users')
         .select('*')
-      
+
       if (debouncedSearch) {
         query = query.or(`phone_number.ilike.%${debouncedSearch}%,full_name.ilike.%${debouncedSearch}%,user_city.ilike.%${debouncedSearch}%`)
       }
-      
+
       if (filterStatus !== 'all') {
         query = query.eq('lead_status', filterStatus)
       }
-      
+
       if (filterCity !== 'all') {
         query = query.eq('user_city', filterCity)
       }
-      
+
+      if (filterSource !== 'all') {
+        query = query.eq('source', filterSource)
+      }
+
+      if (dateRange.from) {
+        query = query.gte('created_at', `${dateRange.from}T00:00:00.000Z`)
+      }
+      if (dateRange.to) {
+        query = query.lte('created_at', `${dateRange.to}T23:59:59.999Z`)
+      }
+
+      if (filterAgeMin) {
+        query = query.gte('age', parseInt(filterAgeMin))
+      }
+      if (filterAgeMax) {
+        query = query.lte('age', parseInt(filterAgeMax))
+      }
+
+      if (filterApptFrom) {
+        query = query.gte('appointment_date', filterApptFrom)
+      }
+      if (filterApptTo) {
+        query = query.lte('appointment_date', filterApptTo)
+      }
+
       const { data, error } = await query
         .order('updated_at', { ascending: false })
         .range(page * 1000, (page + 1) * 1000 - 1)
-      
+
       if (error) throw error
       if (!data || data.length === 0) break
-      
+
       allUsers.push(...data.map(transformUser))
       page++
       if (page > 10) break // Safety limit
@@ -211,7 +285,7 @@ export function UserTable() {
     window.URL.revokeObjectURL(url)
   }
 
-  const hasActiveFilters = searchTerm || filterStatus !== 'all' || filterCity !== 'all'
+  const hasActiveFilters = searchTerm || filterStatus !== 'all' || filterCity !== 'all' || filterSource !== 'all' || filterAgeMin || filterAgeMax || filterApptFrom || filterApptTo || dateRange.from || dateRange.to
 
   // Calculate pagination
   const totalPages = Math.ceil(totalUsers / PAGE_SIZE)
@@ -292,7 +366,7 @@ export function UserTable() {
               </Button>
             </div>
           </div>
-          
+
           <div className="mt-4 space-y-4">
             {/* Main Search - Server-side */}
             <div className="flex flex-col sm:flex-row gap-4">
@@ -328,6 +402,14 @@ export function UserTable() {
               </select>
             </div>
 
+            {/* Date Range Filter */}
+            <DateRangeFilter
+              dateRange={dateRange}
+              onDateRangeChange={(range) => { setDateRange(range); setCurrentPage(0) }}
+              activePreset={datePreset}
+              onPresetChange={setDatePreset}
+            />
+
             {/* Advanced Filters */}
             {showFilters && (
               <div className="bg-gray-50 p-4 rounded-lg space-y-4">
@@ -343,7 +425,7 @@ export function UserTable() {
                     </Button>
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
@@ -360,6 +442,67 @@ export function UserTable() {
                         <option key={city} value={city}>{city}</option>
                       ))}
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                    <select
+                      value={filterSource}
+                      onChange={(e) => {
+                        setFilterSource(e.target.value)
+                        setCurrentPage(0)
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    >
+                      <option value="all">All Sources</option>
+                      {sources.map(src => (
+                        <option key={src} value={src}>{src}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Age Range</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        value={filterAgeMin}
+                        onChange={(e) => { setFilterAgeMin(e.target.value); setCurrentPage(0) }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        min="0"
+                        max="100"
+                      />
+                      <span className="text-gray-400">-</span>
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        value={filterAgeMax}
+                        onChange={(e) => { setFilterAgeMax(e.target.value); setCurrentPage(0) }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        min="0"
+                        max="100"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Appointment Date</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="date"
+                        value={filterApptFrom}
+                        onChange={(e) => { setFilterApptFrom(e.target.value); setCurrentPage(0) }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                      />
+                      <span className="text-gray-400 text-xs">to</span>
+                      <input
+                        type="date"
+                        value={filterApptTo}
+                        onChange={(e) => { setFilterApptTo(e.target.value); setCurrentPage(0) }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -418,7 +561,7 @@ export function UserTable() {
                       <div className="text-gray-500">
                         <p className="text-lg font-medium">No leads found</p>
                         <p className="text-sm mt-1">
-                          {hasActiveFilters 
+                          {hasActiveFilters
                             ? 'Try adjusting your filters or search term'
                             : 'Leads will appear here when users interact with your chatbot'
                           }
@@ -518,7 +661,7 @@ export function UserTable() {
                 <ChevronLeftIcon className="w-4 h-4" />
                 Previous
               </Button>
-              
+
               <div className="flex items-center gap-1">
                 {/* Page numbers */}
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -532,7 +675,7 @@ export function UserTable() {
                   } else {
                     pageNum = currentPage - 2 + i
                   }
-                  
+
                   return (
                     <button
                       key={pageNum}
@@ -548,7 +691,7 @@ export function UserTable() {
                     </button>
                   )
                 })}
-                
+
                 {totalPages > 5 && currentPage < totalPages - 3 && (
                   <>
                     <span className="px-2 text-gray-400">...</span>
@@ -562,7 +705,7 @@ export function UserTable() {
                   </>
                 )}
               </div>
-              
+
               <Button
                 onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={!hasMore || loading}

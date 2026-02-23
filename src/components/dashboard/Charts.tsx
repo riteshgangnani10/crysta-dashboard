@@ -19,7 +19,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { 
+import {
   getLeadStatusAnalytics,
   getCityAnalytics,
   getMonthlyAnalytics,
@@ -27,6 +27,11 @@ import {
   type CityAnalytics,
   type MonthlyAnalytics
 } from '@/lib/supabase'
+
+interface ChartDateFilterProps {
+  dateFrom?: string | null
+  dateTo?: string | null
+}
 
 // Colors for charts
 const COLORS = {
@@ -49,7 +54,7 @@ const STATUS_COLORS: Record<string, string> = {
   unknown: '#9CA3AF'
 }
 
-export function UserActivityChart() {
+export function UserActivityChart({ dateFrom, dateTo }: ChartDateFilterProps = {}) {
   const [data, setData] = useState<MonthlyAnalytics[]>([])
   const [loading, setLoading] = useState(true)
   const [totalUsers, setTotalUsers] = useState(0)
@@ -57,10 +62,12 @@ export function UserActivityChart() {
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true)
       try {
-        const monthlyData = await getMonthlyAnalytics()
+        const dateFilter = (dateFrom || dateTo) ? { dateFrom, dateTo } : undefined
+        const monthlyData = await getMonthlyAnalytics(dateFilter)
         setData(monthlyData)
-        
+
         // Calculate totals
         const users = monthlyData.reduce((sum, m) => sum + m.users, 0)
         const messages = monthlyData.reduce((sum, m) => sum + m.messages, 0)
@@ -72,9 +79,9 @@ export function UserActivityChart() {
         setLoading(false)
       }
     }
-    
+
     loadData()
-  }, [])
+  }, [dateFrom, dateTo])
 
   if (loading) {
     return (
@@ -160,14 +167,16 @@ export function UserActivityChart() {
   )
 }
 
-export function HourlyActivityChart() {
+export function HourlyActivityChart({ dateFrom, dateTo }: ChartDateFilterProps = {}) {
   const [data, setData] = useState<MonthlyAnalytics[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true)
       try {
-        const monthlyData = await getMonthlyAnalytics()
+        const dateFilter = (dateFrom || dateTo) ? { dateFrom, dateTo } : undefined
+        const monthlyData = await getMonthlyAnalytics(dateFilter)
         setData(monthlyData)
       } catch (error) {
         console.error('Error loading monthly data:', error)
@@ -175,9 +184,9 @@ export function HourlyActivityChart() {
         setLoading(false)
       }
     }
-    
+
     loadData()
-  }, [])
+  }, [dateFrom, dateTo])
 
   if (loading) {
     return (
@@ -230,15 +239,17 @@ export function HourlyActivityChart() {
   )
 }
 
-export function LeadStatusChart() {
+export function LeadStatusChart({ dateFrom, dateTo }: ChartDateFilterProps = {}) {
   const [data, setData] = useState<LeadStatusAnalytics[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true)
       try {
-        const statusData = await getLeadStatusAnalytics()
+        const dateFilter = (dateFrom || dateTo) ? { dateFrom, dateTo } : undefined
+        const statusData = await getLeadStatusAnalytics(dateFilter)
         setData(statusData)
         setTotal(statusData.reduce((sum, s) => sum + s.count, 0))
       } catch (error) {
@@ -247,9 +258,9 @@ export function LeadStatusChart() {
         setLoading(false)
       }
     }
-    
+
     loadData()
-  }, [])
+  }, [dateFrom, dateTo])
 
   if (loading) {
     return (
@@ -337,15 +348,17 @@ export function LeadStatusChart() {
   )
 }
 
-export function CityDistributionChart() {
+export function CityDistributionChart({ dateFrom, dateTo }: ChartDateFilterProps = {}) {
   const [data, setData] = useState<CityAnalytics[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true)
       try {
-        const cityData = await getCityAnalytics()
+        const dateFilter = (dateFrom || dateTo) ? { dateFrom, dateTo } : undefined
+        const cityData = await getCityAnalytics(dateFilter)
         setData(cityData.slice(0, 10)) // Top 10 cities
         setTotal(cityData.reduce((sum, c) => sum + c.count, 0))
       } catch (error) {
@@ -354,9 +367,9 @@ export function CityDistributionChart() {
         setLoading(false)
       }
     }
-    
+
     loadData()
-  }, [])
+  }, [dateFrom, dateTo])
 
   if (loading) {
     return (
@@ -425,14 +438,16 @@ export function CityDistributionChart() {
 }
 
 // New chart for message volume
-export function MessageVolumeChart() {
+export function MessageVolumeChart({ dateFrom, dateTo }: ChartDateFilterProps = {}) {
   const [data, setData] = useState<MonthlyAnalytics[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true)
       try {
-        const monthlyData = await getMonthlyAnalytics()
+        const dateFilter = (dateFrom || dateTo) ? { dateFrom, dateTo } : undefined
+        const monthlyData = await getMonthlyAnalytics(dateFilter)
         setData(monthlyData)
       } catch (error) {
         console.error('Error loading message volume data:', error)
@@ -440,9 +455,9 @@ export function MessageVolumeChart() {
         setLoading(false)
       }
     }
-    
+
     loadData()
-  }, [])
+  }, [dateFrom, dateTo])
 
   if (loading) {
     return (
